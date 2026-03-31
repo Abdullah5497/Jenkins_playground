@@ -2,54 +2,53 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'ENV', choices: ['dev', 'prod'], description: 'Choose environment')
-        string(name: 'VERSION', defaultValue: '1.0', description: 'App version')
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'staging', 'production'],
+            description: 'Select deployment environment'
+        )
     }
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                echo "Branch: ${env.BRANCH_NAME}"
-                echo "Environment: ${params.ENV}"
-                echo "Version: ${params.VERSION}"
-            }
-        }
-
         stage('Build') {
+            steps {
+                echo "Building application..."
+            }
+        }
+
+        stage('Deploy to Dev') {
             when {
-                expression { params.ENV == 'dev' }
+                expression { params.ENVIRONMENT == 'dev' }
             }
             steps {
-                echo "Building for DEV..."
+                echo "Deploying to DEV environment"
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy to Staging') {
             when {
-                expression { params.ENV == 'prod' }
+                expression { params.ENVIRONMENT == 'staging' }
             }
             steps {
-                echo "Deploying to PROD..."
+                echo "Deploying to STAGING environment"
             }
         }
-    }
 
-    post {
-        always {
-            echo "Pipeline finished."
-        }
+        stage('Deploy to Production') {
+            when {
+                expression { params.ENVIRONMENT == 'production' }
+            }
+            steps {
+                echo "🚀 Deploying to PRODUCTION environment"
 
-        success {
-            echo "Build SUCCESS ✅"
-        }
-
-        failure {
-            echo "Build FAILED ❌"
-        }
-
-        unstable {
-            echo "Build UNSTABLE ⚠️"
+                sh '''
+                    echo "Running production deployment..."
+                    # your production commands here
+                    # kubectl apply -f deployment.yaml
+                    # docker compose up -d
+                '''
+            }
         }
     }
 }
